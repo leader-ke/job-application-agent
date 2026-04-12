@@ -1,0 +1,31 @@
+# Job search preferences
+roles:
+  - "QA Engineer"
+  - "Senior QA Engineer"
+  - "Quality Engineer"
+  - "Software Engineer in Test"
+  - "SDET"
+
+locations:
+  - "Remote"
+  - "Nairobi, Kenya"
+
+# Jobs scoring below this threshold are skipped entirely
+auto_apply_threshold: 75      # apply automatically
+review_threshold: 55          # flag for human review; below this, skip
+
+# Salary floor (USD/year). Set to 0 to disable filtering.
+salary_floor: 0
+
+# Job boards to search: linkedin, indeed, glassdoor, zip_recruiter, google
+sources:
+  - indeed
+  - glassdoor
+
+# Keywords that disqualify a listing immediately
+exclude_keywords:
+  - "requires US work authorization"
+  - "onsite only"
+  - "clearance required"
+
+results_per_search: 20
