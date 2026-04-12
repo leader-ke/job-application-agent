@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Daily 7:00 AM digest: search jobs, analyze, send email.
+
+  Install:
+    cp scripts/com.jobagent.digest.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.jobagent.digest.plist
+
+  Uninstall:
+    launchctl unload ~/Library/LaunchAgents/com.jobagent.digest.plist
+    rm ~/Library/LaunchAgents/com.jobagent.digest.plist
+
+  Run manually now:
+    launchctl start com.jobagent.digest
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.jobagent.digest</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>-c</string>
+    <string>cd /Users/ken/job-application-agent &amp;&amp; uv run main.py --digest &gt;&gt; /Users/ken/job-application-agent/data/digest.log 2&gt;&amp;1</string>
+  </array>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>7</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <false/>
+
+  <key>StandardOutPath</key>
+  <string>/Users/ken/job-application-agent/data/digest.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/ken/job-application-agent/data/digest.log</string>
+</dict>
+</plist>

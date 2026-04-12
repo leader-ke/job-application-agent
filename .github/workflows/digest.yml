@@ -1,0 +1,89 @@
+name: Job Agent Daily Digest
+
+on:
+  schedule:
+    # 7:00 AM EAT (East Africa Time = UTC+3) → 04:00 UTC
+    - cron: '0 4 * * *'
+  workflow_dispatch:  # allow manual trigger from GitHub UI
+
+jobs:
+  digest:
+    # ── Option A (default): GitHub-hosted runner ─────────────────────────────
+    # Uses Claude API for LLM scoring (set ANTHROPIC_API_KEY secret).
+    # SQLite DB is cached between runs for deduplication.
+    runs-on: ubuntu-latest
+
+    # ── Option B: self-hosted runner on your Mac ─────────────────────────────
+    # Uncomment the line below and comment out runs-on: ubuntu-latest.
+    # Ollama works, DB persists, no API key needed. Mac must be on at 4am UTC.
+    # runs-on: self-hosted
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Install Playwright browser
+        run: uv run playwright install chromium --with-deps
+
+      # Cache SQLite DB between runs so seen jobs are remembered
+      - name: Restore jobs DB cache
+        uses: actions/cache@v4
+        with:
+          path: data/jobs.db
+          key: jobs-db-${{ github.run_number }}
+          restore-keys: |
+            jobs-db-
+
+      - name: Run digest
+        run: uv run main.py --digest
+        env:
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_MODEL: llama-3.3-70b-versatile
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+  apply-approved:
+    name: Check for approval replies
+    runs-on: ubuntu-latest
+    # runs-on: self-hosted  # uncomment for Option B
+
+    # Run hourly during business hours EAT (06:00–20:00 = 03:00–17:00 UTC)
+    # Note: GitHub Actions schedule is separate — add a second workflow trigger
+    # or run this job after digest and on its own schedule.
+    needs: []  # runs independently
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Install Playwright browser
+        run: uv run playwright install chromium --with-deps
+
+      - name: Restore jobs DB cache
+        uses: actions/cache@v4
+        with:
+          path: data/jobs.db
+          key: jobs-db-${{ github.run_number }}
+          restore-keys: |
+            jobs-db-
+
+      - name: Apply approved jobs
+        run: uv run main.py --apply-approved
+        env:
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

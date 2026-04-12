@@ -5,9 +5,16 @@ Supports Greenhouse and Lever. Flags unsupported portals for human review.
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from playwright.sync_api import sync_playwright
+
+APPLICANT_NAME = os.getenv("APPLICANT_NAME", "Kennedy Isiaho")
+APPLICANT_FIRST = APPLICANT_NAME.split()[0]
+APPLICANT_LAST = " ".join(APPLICANT_NAME.split()[1:])
+APPLICANT_EMAIL = os.getenv("GMAIL_ADDRESS", "kenisiaho@gmail.com")
+APPLICANT_PHONE = os.getenv("APPLICANT_PHONE", "+254712869569")
 
 
 SUPPORTED_PORTALS = {
@@ -62,10 +69,10 @@ def _apply_greenhouse(url: str, job: dict[str, Any], analysis: dict[str, Any]) -
         page.goto(url, timeout=30_000)
 
         # Greenhouse standard apply form fields
-        page.fill("#first_name", "Ken")
-        page.fill("#last_name", "Isiaho")
-        page.fill("#email", "")          # fill from env or config
-        page.fill("#phone", "")
+        page.fill("#first_name", APPLICANT_FIRST)
+        page.fill("#last_name", APPLICANT_LAST)
+        page.fill("#email", APPLICANT_EMAIL)
+        page.fill("#phone", APPLICANT_PHONE)
 
         # Cover letter textarea (if present)
         cl_field = page.query_selector("textarea[name='cover_letter']")
@@ -92,9 +99,9 @@ def _apply_lever(url: str, job: dict[str, Any], analysis: dict[str, Any]) -> Non
         page = browser.new_page()
         page.goto(url, timeout=30_000)
 
-        page.fill("input[name='name']", "Ken Isiaho")
-        page.fill("input[name='email']", "")      # fill from env or config
-        page.fill("input[name='phone']", "")
+        page.fill("input[name='name']", APPLICANT_NAME)
+        page.fill("input[name='email']", APPLICANT_EMAIL)
+        page.fill("input[name='phone']", APPLICANT_PHONE)
 
         cl_field = page.query_selector("textarea[name='comments']")
         if cl_field:
