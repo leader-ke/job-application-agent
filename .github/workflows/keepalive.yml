@@ -1,0 +1,25 @@
+name: Keep Alive
+
+on:
+  schedule:
+    # Run on the 1st of every month at 5am EAT (2am UTC)
+    - cron: '0 2 1 * *'
+  workflow_dispatch:
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Touch keepalive file and commit
+        run: |
+          echo "Last keepalive: $(date -u)" > .keepalive
+          git config user.name "leader-ke"
+          git config user.email "kenisiaho@gmail.com"
+          git add .keepalive
+          git commit -m "chore: monthly keepalive [skip ci]"
+          git push
