@@ -27,7 +27,7 @@ def _score_color(score: int) -> str:
         return "#16a34a"  # green
     if score >= 55:
         return "#d97706"  # amber
-    return "#dc2626"      # red
+    return "#dc2626"  # red
 
 
 def _score_label(score: int, decision: str) -> str:
@@ -37,10 +37,7 @@ def _score_label(score: int, decision: str) -> str:
 
 
 def build_subject(digest_id: int, match_count: int) -> str:
-    return (
-        f"Job Agent Digest #{digest_id} — "
-        f"{date.today().isoformat()} ({match_count} matches)"
-    )
+    return f"Job Agent Digest #{digest_id} — {date.today().isoformat()} ({match_count} matches)"
 
 
 _SUPPORTED_PORTALS = ("greenhouse.io", "lever.co")
@@ -81,7 +78,8 @@ def _build_html(jobs: list[dict[str, Any]], digest_id: int) -> str:
         remote_tag = (
             ' <span style="background:#e0f2fe;color:#0369a1;padding:1px 5px;'
             'border-radius:3px;font-size:0.78em;font-weight:bold;">Remote</span>'
-            if is_remote else ""
+            if is_remote
+            else ""
         )
         rows += f"""
         <tr style="background:{bg};">
@@ -96,9 +94,7 @@ def _build_html(jobs: list[dict[str, Any]], digest_id: int) -> str:
         </tr>"""
 
     all_nums = ", ".join(str(j["digest_num"]) for j in jobs)
-    review_nums = ", ".join(
-        str(j["digest_num"]) for j in jobs if j.get("decision") != "apply"
-    )
+    review_nums = ", ".join(str(j["digest_num"]) for j in jobs if j.get("decision") != "apply")
 
     return f"""
     <html>
@@ -160,8 +156,7 @@ def send_digest(jobs: list[dict[str, Any]], digest_id: int) -> str:
     """Send HTML digest email. Returns the subject line."""
     if not GMAIL_APP_PASSWORD:
         raise RuntimeError(
-            "GMAIL_APP_PASSWORD is not set in .env. "
-            "Generate a Gmail App Password and add it."
+            "GMAIL_APP_PASSWORD is not set in .env. Generate a Gmail App Password and add it."
         )
 
     subject = build_subject(digest_id, len(jobs))
@@ -182,6 +177,56 @@ def send_digest(jobs: list[dict[str, Any]], digest_id: int) -> str:
     return subject
 
 
+def send_no_results(new_listings: int, analyzed: int, review_threshold: int) -> None:
+    """
+    Send a short notification when the daily run finds nothing worth surfacing.
+    Always fires so you know the agent ran — even on quiet days.
+    """
+    if not GMAIL_APP_PASSWORD:
+        return
+
+    today = date.today().isoformat()
+    subject = f"Job Agent — No matches today ({today})"
+
+    if new_listings == 0:
+        reason = "No new listings were found on any job board today."
+        detail = "All jobs seen previously were already in the database."
+    else:
+        reason = (
+            f"Found <strong>{new_listings}</strong> new listing(s), "
+            f"but none scored above your review threshold of <strong>{review_threshold}</strong>."
+        )
+        detail = (
+            f"{analyzed} job(s) were analyzed. "
+            "They may have been filtered by location, keywords, or relevance score."
+        )
+
+    html = f"""
+    <html>
+    <body style="font-family:sans-serif;color:#1a1a1a;max-width:560px;margin:auto;padding:16px;">
+      <h3 style="color:#6b7280;">Job Agent — No Matches &mdash; {today}</h3>
+      <p>{reason}</p>
+      <p style="color:#6b7280;font-size:0.9em;">{detail}</p>
+      <p style="color:#9ca3af;font-size:0.78em;margin-top:20px;">
+        The agent runs daily at 7 AM EAT. Next check tomorrow.
+      </p>
+    </body>
+    </html>
+    """
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = GMAIL_ADDRESS
+    msg["To"] = DIGEST_RECIPIENT
+    msg.attach(MIMEText(html, "html"))
+
+    with smtplib.SMTP("smtp.gmail.com", 587) as server:
+        server.ehlo()
+        server.starttls()
+        server.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
+        server.sendmail(GMAIL_ADDRESS, DIGEST_RECIPIENT, msg.as_string())
+
+
 def send_application_confirmation(job: dict[str, Any], digest_id: int, digest_subject: str) -> None:
     """
     Send a reply-style confirmation email after a successful application.
@@ -197,14 +242,14 @@ def send_application_confirmation(job: dict[str, Any], digest_id: int, digest_su
       <p>Your application was automatically submitted for the following role:</p>
       <table style="border-collapse:collapse;width:100%;font-size:0.9em;">
         <tr><td style="padding:6px;color:#555;width:120px;">Role</td>
-            <td style="padding:6px;font-weight:bold;">{job['title']}</td></tr>
+            <td style="padding:6px;font-weight:bold;">{job["title"]}</td></tr>
         <tr style="background:#f9fafb;"><td style="padding:6px;color:#555;">Company</td>
-            <td style="padding:6px;">{job['company']}</td></tr>
+            <td style="padding:6px;">{job["company"]}</td></tr>
         <tr><td style="padding:6px;color:#555;">Location</td>
-            <td style="padding:6px;">{job.get('location', '—')}</td></tr>
+            <td style="padding:6px;">{job.get("location", "—")}</td></tr>
         <tr style="background:#f9fafb;"><td style="padding:6px;color:#555;">Apply URL</td>
             <td style="padding:6px;font-size:0.85em;">
-              <a href="{job['job_url']}">{job['job_url'][:80]}</a></td></tr>
+              <a href="{job["job_url"]}">{job["job_url"][:80]}</a></td></tr>
       </table>
       <p style="color:#555;font-size:0.85em;margin-top:16px;">
         A tailored cover letter was submitted. Check the portal to confirm receipt

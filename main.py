@@ -15,6 +15,7 @@ from __future__ import annotations
 
 # load_dotenv MUST run before any project imports that call os.getenv at module level
 from dotenv import load_dotenv
+
 load_dotenv()
 
 import json
@@ -37,7 +38,7 @@ from agent.data.store import (
     save_pending_job,
     update_digest_subject,
 )
-from agent.notify.emailer import send_application_confirmation, send_digest
+from agent.notify.emailer import send_application_confirmation, send_digest, send_no_results
 from agent.notify.reply_checker import check_for_approvals
 from agent.search.scraper import fetch_new_jobs
 
@@ -52,6 +53,7 @@ def load_prefs() -> dict:
 # ---------------------------------------------------------------------------
 # Shared: search + analyze
 # ---------------------------------------------------------------------------
+
 
 def _search_and_analyze(prefs: dict) -> list[tuple[dict, dict, str]]:
     """Run search and analyze passes. Returns (job, analysis, decision) tuples."""
@@ -90,6 +92,7 @@ def _search_and_analyze(prefs: dict) -> list[tuple[dict, dict, str]]:
 # Mode: --dry-run
 # ---------------------------------------------------------------------------
 
+
 def run_dry(prefs: dict) -> None:
     results = _search_and_analyze(prefs)
     if not results:
@@ -100,9 +103,7 @@ def run_dry(prefs: dict) -> None:
     for job, analysis, decision in results:
         score = analysis.get("score", 0)
         if decision == "review":
-            console.print(
-                f"    [yellow]Needs review[/yellow] (score {score}): {job['job_url']}"
-            )
+            console.print(f"    [yellow]Needs review[/yellow] (score {score}): {job['job_url']}")
         elif decision == "skip":
             console.print(f"    [dim]Skipped (score {score})[/dim]")
         table.add_row(job["title"], job["company"], str(score), decision)
@@ -114,6 +115,7 @@ def run_dry(prefs: dict) -> None:
 # ---------------------------------------------------------------------------
 # Mode: --digest
 # ---------------------------------------------------------------------------
+
 
 def run_digest(prefs: dict) -> None:
     """Search, analyze, save actionable jobs to DB, send email digest."""
@@ -128,7 +130,16 @@ def run_digest(prefs: dict) -> None:
     ]
 
     if not actionable:
-        console.print("[yellow]No actionable jobs found. Digest not sent.[/yellow]")
+        console.print("[yellow]No actionable jobs found. Sending no-results notification.[/yellow]")
+        try:
+            send_no_results(
+                new_listings=len(results),
+                analyzed=len(results),
+                review_threshold=prefs["review_threshold"],
+            )
+            console.print("[dim]No-results email sent.[/dim]")
+        except Exception as exc:  # noqa: BLE001
+            console.print(f"[dim]No-results email failed: {exc}[/dim]")
         return
 
     # Reserve a digest ID first, then update subject once we know it
@@ -178,6 +189,7 @@ def run_digest(prefs: dict) -> None:
 # Mode: --apply-approved
 # ---------------------------------------------------------------------------
 
+
 def run_apply_approved() -> None:
     """Check Gmail for APPLY replies and apply to those jobs."""
     ensure_tables()
@@ -191,9 +203,7 @@ def run_apply_approved() -> None:
     for approval in approvals:
         digest_id: int = approval["digest_id"]
         nums: list[int] = approval["approved_nums"]
-        console.print(
-            f"\n  Digest [bold]#{digest_id}[/bold]: approved job numbers {nums}"
-        )
+        console.print(f"\n  Digest [bold]#{digest_id}[/bold]: approved job numbers {nums}")
 
         jobs_to_apply = get_jobs_by_digest_nums(digest_id, nums)
         if not jobs_to_apply:
@@ -204,7 +214,9 @@ def run_apply_approved() -> None:
             continue
 
         digest_record = get_digest(digest_id)
-        digest_subject = digest_record["subject"] if digest_record else f"Job Agent Digest #{digest_id}"
+        digest_subject = (
+            digest_record["subject"] if digest_record else f"Job Agent Digest #{digest_id}"
+        )
 
         for job_row in jobs_to_apply:
             job = {
@@ -218,9 +230,7 @@ def run_apply_approved() -> None:
                 "tailored_bullets": json.loads(job_row["tailored_bullets"] or "[]"),
                 "cover_letter": job_row["cover_letter"] or "",
             }
-            console.print(
-                f"  Applying: [cyan]{job['title']}[/cyan] @ {job['company']}"
-            )
+            console.print(f"  Applying: [cyan]{job['title']}[/cyan] @ {job['company']}")
             result = apply(job, analysis)
             status = result["status"]
             mark_job_status(job["id"], status)
@@ -228,7 +238,7 @@ def run_apply_approved() -> None:
             if status == "flagged":
                 console.print(f"    [yellow]Flagged:[/yellow] {result['reason']}")
             else:
-                console.print(f"    [green]Applied successfully[/green]")
+                console.print("    [green]Applied successfully[/green]")
                 try:
                     send_application_confirmation(job, digest_id, digest_subject)
                 except Exception as exc:  # noqa: BLE001
@@ -240,6 +250,7 @@ def run_apply_approved() -> None:
 # ---------------------------------------------------------------------------
 # Mode: full auto (no flag)
 # ---------------------------------------------------------------------------
+
 
 def run_full(prefs: dict) -> None:
     results = _search_and_analyze(prefs)
@@ -257,9 +268,7 @@ def run_full(prefs: dict) -> None:
             if result["status"] == "flagged":
                 console.print(f"    [yellow]Flagged:[/yellow] {result['reason']}")
         elif decision == "review":
-            console.print(
-                f"    [yellow]Needs review[/yellow] (score {score}): {job['job_url']}"
-            )
+            console.print(f"    [yellow]Needs review[/yellow] (score {score}): {job['job_url']}")
         elif decision == "skip":
             console.print(f"    [dim]Skipped (score {score})[/dim]")
 
@@ -277,6 +286,7 @@ def run_full(prefs: dict) -> None:
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     console.rule("[bold blue]Job Application Agent")
