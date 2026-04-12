@@ -76,13 +76,20 @@ def _build_html(jobs: list[dict[str, Any]], digest_id: int) -> str:
         link = f'<a href="{url}" style="color:#1d4ed8;">{short_url}</a>'
         badge = _apply_badge(url)
         bg = "#f0fdf4" if j.get("decision") == "apply" else "#fff"
+        loc_text = j["location"] or "—"
+        is_remote = j.get("is_remote") or "remote" in loc_text.lower()
+        remote_tag = (
+            ' <span style="background:#e0f2fe;color:#0369a1;padding:1px 5px;'
+            'border-radius:3px;font-size:0.78em;font-weight:bold;">Remote</span>'
+            if is_remote else ""
+        )
         rows += f"""
         <tr style="background:{bg};">
           <td style="text-align:center;font-weight:bold;padding:8px 12px;">{j["digest_num"]}</td>
           <td style="color:{color};text-align:center;font-weight:bold;padding:8px 12px;">{label}</td>
           <td style="padding:8px 12px;">{j["title"]}</td>
           <td style="padding:8px 12px;">{j["company"]}</td>
-          <td style="padding:8px 12px;font-size:0.85em;">{j["location"]}</td>
+          <td style="padding:8px 12px;font-size:0.85em;">{loc_text}{remote_tag}</td>
           <td style="padding:8px 12px;text-align:center;">{badge}</td>
           <td style="padding:8px 12px;font-size:0.82em;color:#444;">{j["rationale"]}</td>
           <td style="padding:8px 12px;font-size:0.8em;">{link}</td>

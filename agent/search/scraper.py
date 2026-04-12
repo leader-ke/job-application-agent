@@ -161,6 +161,7 @@ def fetch_new_jobs(
                         "title": title,
                         "company": company,
                         "location": str(row.get("location") or ""),
+                        "is_remote": bool(is_remote),
                         "description": description,
                         "job_url": str(row.get("job_url") or ""),
                         "site": str(row.get("site") or ""),
