@@ -27,11 +27,7 @@ def _extract_approved_nums(text: str) -> list[int]:
     match = re.search(r"APPLY\s*:\s*([\d\s,]+)", text, re.IGNORECASE)
     if not match:
         return []
-    return [
-        int(n.strip())
-        for n in re.split(r"[,\s]+", match.group(1))
-        if n.strip().isdigit()
-    ]
+    return [int(n.strip()) for n in re.split(r"[,\s]+", match.group(1)) if n.strip().isdigit()]
 
 
 def _extract_digest_id(subject: str) -> int | None:
@@ -68,8 +64,7 @@ def check_for_approvals() -> list[dict[str, Any]]:
     """
     if not GMAIL_APP_PASSWORD:
         raise RuntimeError(
-            "GMAIL_APP_PASSWORD is not set in .env. "
-            "Generate a Gmail App Password and add it."
+            "GMAIL_APP_PASSWORD is not set in .env. Generate a Gmail App Password and add it."
         )
 
     results: list[dict[str, Any]] = []
@@ -102,9 +97,7 @@ def check_for_approvals() -> list[dict[str, Any]]:
 
     except imaplib.IMAP4.error as exc:
         print(f"[reply_checker] IMAP authentication error: {exc}")
-        print(
-            "  Ensure IMAP is enabled in Gmail settings and GMAIL_APP_PASSWORD is correct."
-        )
+        print("  Ensure IMAP is enabled in Gmail settings and GMAIL_APP_PASSWORD is correct.")
     except Exception as exc:  # noqa: BLE001
         print(f"[reply_checker] Unexpected error: {exc}")
 

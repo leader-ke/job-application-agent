@@ -61,6 +61,7 @@ def apply(job: dict[str, Any], analysis: dict[str, Any]) -> dict[str, str]:
 # Portal handlers
 # ---------------------------------------------------------------------------
 
+
 def _apply_greenhouse(url: str, job: dict[str, Any], analysis: dict[str, Any]) -> None:
     cover_letter = analysis.get("cover_letter", "")
     with sync_playwright() as p:
@@ -80,9 +81,7 @@ def _apply_greenhouse(url: str, job: dict[str, Any], analysis: dict[str, Any]) -
             cl_field.fill(cover_letter)
 
         # Resume upload — expects a pre-generated PDF in data/
-        resume_pdf = str(
-            __import__("pathlib").Path(__file__).parents[2] / "data" / "resume.pdf"
-        )
+        resume_pdf = str(__import__("pathlib").Path(__file__).parents[2] / "data" / "resume.pdf")
         file_input = page.query_selector("input[type='file']")
         if file_input:
             file_input.set_input_files(resume_pdf)
@@ -107,9 +106,7 @@ def _apply_lever(url: str, job: dict[str, Any], analysis: dict[str, Any]) -> Non
         if cl_field:
             cl_field.fill(cover_letter)
 
-        resume_pdf = str(
-            __import__("pathlib").Path(__file__).parents[2] / "data" / "resume.pdf"
-        )
+        resume_pdf = str(__import__("pathlib").Path(__file__).parents[2] / "data" / "resume.pdf")
         file_input = page.query_selector("input[type='file']")
         if file_input:
             file_input.set_input_files(resume_pdf)

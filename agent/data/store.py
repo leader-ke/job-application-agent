@@ -128,7 +128,5 @@ def mark_digest_replied(digest_id: int) -> None:
 
 def get_digest(digest_id: int) -> dict[str, Any] | None:
     with _conn() as conn:
-        row = conn.execute(
-            "SELECT * FROM digests WHERE id = ?", (digest_id,)
-        ).fetchone()
+        row = conn.execute("SELECT * FROM digests WHERE id = ?", (digest_id,)).fetchone()
     return dict(row) if row else None

@@ -34,6 +34,7 @@ def _call_llm(prompt: str) -> str:
     """
     if GROQ_API_KEY:
         from groq import Groq
+
         client = Groq(api_key=GROQ_API_KEY)
         response = client.chat.completions.create(
             model=GROQ_MODEL,
@@ -45,6 +46,7 @@ def _call_llm(prompt: str) -> str:
 
     if ANTHROPIC_API_KEY:
         import anthropic
+
         client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
         msg = client.messages.create(
             model=CLAUDE_MODEL,
@@ -54,6 +56,7 @@ def _call_llm(prompt: str) -> str:
         return msg.content[0].text.strip()
 
     import ollama
+
     response = ollama.chat(
         model=OLLAMA_MODEL,
         messages=[{"role": "user", "content": prompt}],
@@ -80,12 +83,12 @@ def analyze_job(job: dict[str, Any]) -> dict[str, Any]:
 You receive a job description and a candidate's resume.
 You respond ONLY with a valid JSON object — no markdown fences, no commentary, no extra text.
 
-Job title: {job['title']}
-Company: {job['company']}
-Location: {job['location']}
+Job title: {job["title"]}
+Company: {job["company"]}
+Location: {job["location"]}
 
 --- JOB DESCRIPTION ---
-{job['description'][:4000]}
+{job["description"][:4000]}
 
 --- CANDIDATE RESUME ---
 {resume}
