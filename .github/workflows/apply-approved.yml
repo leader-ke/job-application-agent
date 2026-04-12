@@ -2,8 +2,8 @@ name: Apply Approved Jobs
 
 on:
   schedule:
-    # Every hour from 6am to 9pm EAT (3am–18:00 UTC)
-    - cron: '0 3-18 * * *'
+    # Every hour from 8am to 8pm EAT (5am–17:00 UTC)
+    - cron: '0 5-17 * * *'
   workflow_dispatch:  # allow manual trigger
 
 jobs:
