@@ -110,6 +110,8 @@ def test_fetch_new_jobs_returns_matching_job(mock_db):
     with (
         patch("agent.search.scraper.scrape_jobs", return_value=df),
         patch("agent.search.scraper.fetch_mygov_jobs", return_value=[]),
+        patch("agent.search.scraper.fetch_crossover_jobs", return_value=[]),
+        patch("agent.search.scraper.fetch_arc_jobs", return_value=[]),
     ):
         jobs = fetch_new_jobs(
             roles=["Senior QA Engineer"],
@@ -129,6 +131,8 @@ def test_fetch_new_jobs_deduplicates_across_calls(mock_db):
     with (
         patch("agent.search.scraper.scrape_jobs", return_value=df),
         patch("agent.search.scraper.fetch_mygov_jobs", return_value=[]),
+        patch("agent.search.scraper.fetch_crossover_jobs", return_value=[]),
+        patch("agent.search.scraper.fetch_arc_jobs", return_value=[]),
     ):
         first = fetch_new_jobs(["QA"], ["Nairobi Kenya"], ["linkedin"], 10, [])
         second = fetch_new_jobs(["QA"], ["Nairobi Kenya"], ["linkedin"], 10, [])
@@ -147,6 +151,8 @@ def test_fetch_new_jobs_excludes_keywords(mock_db):
     with (
         patch("agent.search.scraper.scrape_jobs", return_value=df),
         patch("agent.search.scraper.fetch_mygov_jobs", return_value=[]),
+        patch("agent.search.scraper.fetch_crossover_jobs", return_value=[]),
+        patch("agent.search.scraper.fetch_arc_jobs", return_value=[]),
     ):
         jobs = fetch_new_jobs(["QA"], ["Nairobi Kenya"], ["linkedin"], 10, ["junior"])
     assert jobs == []
@@ -163,6 +169,8 @@ def test_fetch_new_jobs_filters_wrong_location(mock_db):
     with (
         patch("agent.search.scraper.scrape_jobs", return_value=df),
         patch("agent.search.scraper.fetch_mygov_jobs", return_value=[]),
+        patch("agent.search.scraper.fetch_crossover_jobs", return_value=[]),
+        patch("agent.search.scraper.fetch_arc_jobs", return_value=[]),
     ):
         jobs = fetch_new_jobs(["QA"], ["Nairobi Kenya"], ["linkedin"], 10, [])
     assert jobs == []
@@ -172,6 +180,8 @@ def test_fetch_new_jobs_handles_scrape_failure(mock_db):
     with (
         patch("agent.search.scraper.scrape_jobs", side_effect=Exception("network error")),
         patch("agent.search.scraper.fetch_mygov_jobs", return_value=[]),
+        patch("agent.search.scraper.fetch_crossover_jobs", return_value=[]),
+        patch("agent.search.scraper.fetch_arc_jobs", return_value=[]),
     ):
         jobs = fetch_new_jobs(["QA"], ["Nairobi Kenya"], ["linkedin"], 10, [])
     assert jobs == []
@@ -190,6 +200,8 @@ def test_fetch_new_jobs_includes_mygov(mock_db):
     with (
         patch("agent.search.scraper.scrape_jobs", return_value=pd.DataFrame()),
         patch("agent.search.scraper.fetch_mygov_jobs", return_value=[mygov_job]),
+        patch("agent.search.scraper.fetch_crossover_jobs", return_value=[]),
+        patch("agent.search.scraper.fetch_arc_jobs", return_value=[]),
     ):
         jobs = fetch_new_jobs(["ICT"], ["Kenya"], ["linkedin"], 10, [])
     assert len(jobs) == 1

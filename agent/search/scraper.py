@@ -12,6 +12,8 @@ from typing import Any
 import pandas as pd
 from jobspy2 import scrape_jobs
 
+from agent.search.arc_scraper import fetch_arc_jobs
+from agent.search.crossover_scraper import fetch_crossover_jobs
 from agent.search.mygov_scraper import fetch_mygov_jobs
 
 DB_PATH = Path(__file__).parents[2] / "data" / "jobs.db"
@@ -170,20 +172,26 @@ def fetch_new_jobs(
                     }
                 )
 
-    # --- MyGov (Kenya government jobs — always included) ---
-    try:
-        for job in fetch_mygov_jobs():
-            job_id = job["id"]
-            nkey = _norm_key(job["title"], job["company"])
-            if _is_duplicate(job_id, nkey):
-                continue
-            title_and_desc = (job["title"] + " " + job.get("description", "")).lower()
-            if any(kw.lower() in title_and_desc for kw in exclude_keywords):
-                continue
-            _record(job_id, job["title"], job["company"], job["location"])
-            new_jobs.append(job)
-    except Exception as exc:  # noqa: BLE001
-        print(f"[search] mygov scrape failed: {exc}")
+    # --- Supplemental scrapers (always included, site-specific) ---
+    supplemental = [
+        ("mygov", fetch_mygov_jobs),
+        ("crossover", fetch_crossover_jobs),
+        ("arc", fetch_arc_jobs),
+    ]
+    for site_name, fetcher in supplemental:
+        try:
+            for job in fetcher():
+                job_id = job["id"]
+                nkey = _norm_key(job["title"], job["company"])
+                if _is_duplicate(job_id, nkey):
+                    continue
+                title_and_desc = (job["title"] + " " + job.get("description", "")).lower()
+                if any(kw.lower() in title_and_desc for kw in exclude_keywords):
+                    continue
+                _record(job_id, job["title"], job["company"], job["location"])
+                new_jobs.append(job)
+        except Exception as exc:  # noqa: BLE001
+            print(f"[search] {site_name} scrape failed: {exc}")
 
     conn.close()
     return new_jobs
