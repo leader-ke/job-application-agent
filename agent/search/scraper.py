@@ -44,9 +44,11 @@ def _normalize(text: str) -> str:
 
 
 def _make_job_id(row: pd.Series) -> str:
-    """Stable ID: prefer job_url, fall back to title+company."""
-    url = row.get("job_url") or ""
-    if url:
+    """Stable ID: prefer job_url, fall back to title+company.
+    Handles pandas NaN (float) which is truthy but has no .strip().
+    """
+    url = row.get("job_url")
+    if url and isinstance(url, str) and url.strip():
         return url.strip()
     return f"{row.get('title', '')}::{row.get('company', '')}".lower()
 

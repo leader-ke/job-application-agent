@@ -1,0 +1,25 @@
+repos:
+  - repo: local
+    hooks:
+      # ── commit-time: lint + format ──────────────────────────────────────────
+      - id: ruff-check
+        name: ruff lint
+        entry: uv run ruff check --fix
+        language: system
+        types: [python]
+        stages: [pre-commit]
+
+      - id: ruff-format
+        name: ruff format
+        entry: uv run ruff format
+        language: system
+        types: [python]
+        stages: [pre-commit]
+
+      # ── push-time: full test suite ──────────────────────────────────────────
+      - id: pytest
+        name: pytest
+        entry: uv run pytest --no-header -q
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
