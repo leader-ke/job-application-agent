@@ -12,8 +12,8 @@ wheels/
 # Secrets
 .env
 
-# Runtime data (SQLite db, downloaded files)
-data/
+# Runtime data (SQLite db, downloaded files) — anchor to repo root only
+/data/
 
 # Test cache
 .pytest_cache/
