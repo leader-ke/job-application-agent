@@ -11,7 +11,6 @@ your email digest for manual action.
 from __future__ import annotations
 
 import hashlib
-import re
 from typing import Any
 from urllib.parse import urljoin
 
