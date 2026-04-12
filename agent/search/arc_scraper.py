@@ -19,6 +19,26 @@ import httpx
 
 BASE_URL = "https://arc.dev"
 
+# Title must contain at least one of these to be forwarded to the LLM
+TITLE_KEYWORDS = [
+    "qa",
+    "quality assurance",
+    "quality engineer",
+    "test engineer",
+    "sdet",
+    "software engineer in test",
+    "automation engineer",
+    "product manager",
+    "ict officer",
+    "ict manager",
+]
+
+
+def _is_relevant(title: str) -> bool:
+    low = title.lower()
+    return any(kw in low for kw in TITLE_KEYWORDS)
+
+
 # Role-specific search URLs on Arc.dev
 SEARCH_URLS = [
     f"{BASE_URL}/remote-jobs?keyword=QA+engineer",
@@ -96,6 +116,8 @@ def _extract_from_next_data(html: str) -> list[dict[str, Any]]:
         ).strip()
         if not title or not slug:
             continue
+        if not _is_relevant(title):
+            continue
         url = urljoin(BASE_URL, f"/remote-jobs/{slug}")
         if url in seen:
             continue
@@ -151,6 +173,8 @@ def _fetch_via_playwright(search_url: str) -> list[dict[str, Any]]:
                 title_el = link.query_selector("h2, h3, h4, [class*='title']") or link
                 title = (title_el.inner_text() or "").strip()
                 if not title or len(title) < 4:
+                    continue
+                if not _is_relevant(title):
                     continue
 
                 company_el = link.query_selector("[class*='company'], [class*='employer']")

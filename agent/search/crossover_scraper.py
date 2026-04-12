@@ -24,6 +24,25 @@ SEARCH_TERMS = [
     "Product Manager",
 ]
 
+# Title must contain at least one of these to be forwarded to the LLM
+TITLE_KEYWORDS = [
+    "qa",
+    "quality assurance",
+    "quality engineer",
+    "test engineer",
+    "sdet",
+    "software engineer in test",
+    "automation engineer",
+    "product manager",
+    "ict officer",
+    "ict manager",
+]
+
+
+def _is_relevant(title: str) -> bool:
+    low = title.lower()
+    return any(kw in low for kw in TITLE_KEYWORDS)
+
 
 def _job_id(url: str) -> str:
     return "crossover_" + hashlib.md5(url.encode()).hexdigest()[:12]
@@ -94,6 +113,9 @@ def fetch_crossover_jobs() -> list[dict[str, Any]]:
                     )
                     title = (title_el.inner_text() or "").strip()
                     if not title or len(title) < 4:
+                        continue
+
+                    if not _is_relevant(title):
                         continue
 
                     # Company — Crossover jobs are typically listed under the client company

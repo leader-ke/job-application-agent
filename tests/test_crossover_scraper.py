@@ -4,7 +4,37 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from agent.search.crossover_scraper import _build_description, _job_id, fetch_crossover_jobs
+from agent.search.crossover_scraper import (
+    _build_description,
+    _is_relevant,
+    _job_id,
+    fetch_crossover_jobs,
+)
+
+# ── _is_relevant ─────────────────────────────────────────────────────────────
+
+
+def test_is_relevant_qa_engineer():
+    assert _is_relevant("QA Engineer") is True
+
+
+def test_is_relevant_automation_engineer():
+    assert _is_relevant("Automation Engineer") is True
+
+
+def test_is_relevant_product_manager():
+    assert _is_relevant("Product Manager") is True
+
+
+def test_is_relevant_rejects_unrelated():
+    assert _is_relevant("Sales Representative") is False
+
+
+def test_is_relevant_case_insensitive():
+    assert _is_relevant("TEST ENGINEER - Remote") is True
+
+
+# ── _job_id ───────────────────────────────────────────────────────────────────
 
 
 def test_job_id_prefix():

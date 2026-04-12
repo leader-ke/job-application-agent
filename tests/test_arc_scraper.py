@@ -8,9 +8,46 @@ from unittest.mock import MagicMock, patch
 from agent.search.arc_scraper import (
     _build_description,
     _extract_from_next_data,
+    _is_relevant,
     _job_id,
     fetch_arc_jobs,
 )
+
+# ── _is_relevant ─────────────────────────────────────────────────────────────
+
+
+def test_is_relevant_matches_qa():
+    assert _is_relevant("Senior QA Engineer") is True
+
+
+def test_is_relevant_matches_product_manager():
+    assert _is_relevant("Product Manager, Growth") is True
+
+
+def test_is_relevant_matches_sdet():
+    assert _is_relevant("SDET II") is True
+
+
+def test_is_relevant_rejects_unrelated():
+    assert _is_relevant("Backend Software Engineer") is False
+
+
+def test_is_relevant_case_insensitive():
+    assert _is_relevant("QUALITY ASSURANCE LEAD") is True
+
+
+def test_is_relevant_filters_next_data_irrelevant_title():
+    """Titles that don't match keywords must be filtered out of __NEXT_DATA__."""
+    html = _make_next_data(
+        [
+            {"title": "Backend Software Engineer", "slug": "backend-se", "company": {"name": "X"}},
+            {"title": "QA Engineer", "slug": "qa-eng", "company": {"name": "Y"}},
+        ]
+    )
+    jobs = _extract_from_next_data(html)
+    assert len(jobs) == 1
+    assert jobs[0]["title"] == "QA Engineer"
+
 
 # ── _job_id ──────────────────────────────────────────────────────────────────
 
